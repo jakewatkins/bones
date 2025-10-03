@@ -1,0 +1,25 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch Bones (Debug)",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/Debug/net9.0/Bones.dll",
+            "args": ["personal", "test1"],
+            "stopAtEntry": false,
+            "console": "integratedTerminal",
+            "preLaunchTask": "build"
+        },
+        {
+            "name": "Launch Bones with SpecKit (Debug)",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/bin/Debug/net9.0/Bones.dll",
+            "args": ["personal", "test1", "sk"],
+            "stopAtEntry": false,
+            "console": "integratedTerminal",
+            "preLaunchTask": "build"
+        }
+    ]
+}
