@@ -3,6 +3,8 @@ using Bones.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Reflection;
+using System.Text.Json;
 
 namespace Bones;
 
@@ -10,7 +12,37 @@ class Program
 {
     static async Task<int> Main(string[] args)
     {
-        var host = CreateHostBuilder(args).Build();
+        // Step 1: Pre-validate configuration file existence
+        var executablePath = Environment.ProcessPath ?? Assembly.GetExecutingAssembly().Location;
+        var executableDirectory = Path.GetDirectoryName(executablePath);
+        var configFilePath = Path.Combine(executableDirectory!, "appsettings.json");
+
+        if (!File.Exists(configFilePath))
+        {
+            var consoleService = new ConsoleService();
+            consoleService.WriteError($"appsettings.json not found at: {configFilePath}");
+            return 1;
+        }
+
+        IHost host;
+        try
+        {
+            host = CreateHostBuilder(args).Build();
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("Invalid JSON"))
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"Error: {ex.Message}");
+            Console.ResetColor();
+            return 1;
+        }
+        catch (FileNotFoundException ex) when (ex.FileName?.Contains("appsettings.json") == true)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"Error: appsettings.json not found at: {ex.FileName}");
+            Console.ResetColor();
+            return 1;
+        }
         
         try
         {
@@ -38,6 +70,12 @@ class Program
             PrintUsage(host.Services.GetRequiredService<IConsoleService>());
             return 1;
         }
+        catch (FileNotFoundException ex) when (ex.FileName?.Contains("appsettings.json") == true)
+        {
+            var consoleService = host.Services.GetRequiredService<IConsoleService>();
+            consoleService.WriteError($"appsettings.json not found at: {ex.FileName}");
+            return 1;
+        }
         catch (Exception ex)
         {
             var consoleService = host.Services.GetRequiredService<IConsoleService>();
@@ -46,11 +84,32 @@ class Program
         }
     }
 
-    static IHostBuilder CreateHostBuilder(string[] args) =>
-        Host.CreateDefaultBuilder(args)
+    static IHostBuilder CreateHostBuilder(string[] args)
+    {
+        // Get the directory where the executable is located
+        var executablePath = Environment.ProcessPath ?? Assembly.GetExecutingAssembly().Location;
+        var executableDirectory = Path.GetDirectoryName(executablePath);
+        var configFilePath = Path.Combine(executableDirectory!, "appsettings.json");
+        
+        // Validate JSON format before attempting to use it
+        try
+        {
+            var jsonContent = File.ReadAllText(configFilePath);
+            using var document = JsonDocument.Parse(jsonContent);
+        }
+        catch (JsonException ex)
+        {
+            throw new InvalidOperationException($"Invalid JSON in {configFilePath}: {ex.Message}");
+        }
+
+        return Host.CreateDefaultBuilder(args)
             .ConfigureAppConfiguration((context, config) =>
             {
-                config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: false);
+                // Clear default configuration sources to remove fallbacks
+                config.Sources.Clear();
+                
+                // Add only our specific appsettings.json from executable directory
+                config.AddJsonFile(configFilePath, optional: false, reloadOnChange: false);
             })
             .ConfigureServices((context, services) =>
             {
@@ -65,6 +124,7 @@ class Program
                 services.AddSingleton<IConsoleService, ConsoleService>();
                 services.AddScoped<IProjectService, ProjectService>();
             });
+    }
 
     static void PrintUsage(IConsoleService consoleService)
     {

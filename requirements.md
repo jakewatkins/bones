@@ -58,3 +58,11 @@ it will do a git init to setup git for the project.
 if the SK parameter is included bones will run the command specify init including the paramters --ai copilot, --script sh, and the --here parameters.
 if the SK parameter is included copy the Constitution.md file from the copilot-resources repo to the .specify/memory folder of the project after the specify script has been run.
 
+# requirement 2
+- the appsettings.json will be the same directory as the bones executable file.  When the user runs bones, it needs to load the appsettings.json file in the same directory as the executable
+- if appsettings.json is missing, print an error message on the screen in red saying that appsettings.json is missing and then exit the application.
+- when appsettings.json is missing, the error message should include the full path where the file was expected
+- exit with error code 1 when configuration file is missing
+- configuration loading should only check the executable directory (no fallback locations)
+- the configuration file does not need any validation.
+- at this time we will just have the 1 appsettings.json file and do not need to support environment specific versions.
