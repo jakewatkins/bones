@@ -13,9 +13,22 @@ class Program
     static async Task<int> Main(string[] args)
     {
         // Step 1: Pre-validate configuration file existence
-        var executablePath = Environment.ProcessPath ?? Assembly.GetExecutingAssembly().Location;
-        var executableDirectory = Path.GetDirectoryName(executablePath);
-        var configFilePath = Path.Combine(executableDirectory!, "appsettings.json");
+        string configDirectory;
+        
+        // Check for environment variable override (used by wrapper scripts)
+        var envConfigDir = Environment.GetEnvironmentVariable("BONES_CONFIG_DIR");
+        if (!string.IsNullOrEmpty(envConfigDir))
+        {
+            configDirectory = envConfigDir;
+        }
+        else
+        {
+            // Default: use the directory where the executable is located
+            var executablePath = Environment.ProcessPath ?? Assembly.GetExecutingAssembly().Location;
+            configDirectory = Path.GetDirectoryName(executablePath)!;
+        }
+        
+        var configFilePath = Path.Combine(configDirectory, "appsettings.json");
 
         if (!File.Exists(configFilePath))
         {
@@ -86,10 +99,23 @@ class Program
 
     static IHostBuilder CreateHostBuilder(string[] args)
     {
-        // Get the directory where the executable is located
-        var executablePath = Environment.ProcessPath ?? Assembly.GetExecutingAssembly().Location;
-        var executableDirectory = Path.GetDirectoryName(executablePath);
-        var configFilePath = Path.Combine(executableDirectory!, "appsettings.json");
+        // Get the directory where the configuration should be located
+        string configDirectory;
+        
+        // Check for environment variable override (used by wrapper scripts)
+        var envConfigDir = Environment.GetEnvironmentVariable("BONES_CONFIG_DIR");
+        if (!string.IsNullOrEmpty(envConfigDir))
+        {
+            configDirectory = envConfigDir;
+        }
+        else
+        {
+            // Default: use the directory where the executable is located
+            var executablePath = Environment.ProcessPath ?? Assembly.GetExecutingAssembly().Location;
+            configDirectory = Path.GetDirectoryName(executablePath)!;
+        }
+        
+        var configFilePath = Path.Combine(configDirectory, "appsettings.json");
         
         // Validate JSON format before attempting to use it
         try
