@@ -1,32 +1,63 @@
 namespace Bones.Services;
 
-public interface IConsoleService
+/// <summary>
+/// Implementation of console output service with color formatting.
+/// Provides consistent visual feedback throughout the application execution.
+/// </summary>
+public sealed class ConsoleService : IConsoleService
 {
-    void WriteError(string message);
-    void WriteSuccess(string message);
-    void WriteInfo(string message);
-}
+    /// <summary>
+    /// Writes text to the console in the specified color without a newline.
+    /// </summary>
+    /// <param name="message">The message to display</param>
+    /// <param name="color">The console color to use</param>
+    public void WriteColored(string message, ConsoleColor color)
+    {
+        var originalColor = Console.ForegroundColor;
+        Console.ForegroundColor = color;
+        Console.Write(message);
+        Console.ForegroundColor = originalColor;
+    }
 
-public class ConsoleService : IConsoleService
-{
+    /// <summary>
+    /// Writes a line to the console in the specified color.
+    /// </summary>
+    /// <param name="message">The message to display</param>
+    /// <param name="color">The console color to use</param>
+    public void WriteLineColored(string message, ConsoleColor color)
+    {
+        var originalColor = Console.ForegroundColor;
+        Console.ForegroundColor = color;
+        Console.WriteLine(message);
+        Console.ForegroundColor = originalColor;
+    }
+
+    /// <summary>
+    /// Writes an error message in red and exits the application.
+    /// Used for fatal errors that should stop execution immediately.
+    /// </summary>
+    /// <param name="message">The error message to display</param>
     public void WriteError(string message)
     {
-        var originalColor = Console.ForegroundColor;
-        Console.ForegroundColor = ConsoleColor.Red;
-        Console.WriteLine($"Error: {message}");
-        Console.ForegroundColor = originalColor;
+        WriteLineColored($"Error: {message}", ConsoleColor.Red);
+        Environment.Exit(1);
     }
 
-    public void WriteSuccess(string message)
+    /// <summary>
+    /// Writes a blue progress dot to indicate ongoing file operations.
+    /// One dot is shown per file or prompt being processed.
+    /// </summary>
+    public void WriteProgress()
     {
-        var originalColor = Console.ForegroundColor;
-        Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine(message);
-        Console.ForegroundColor = originalColor;
+        WriteColored(".", ConsoleColor.Blue);
     }
 
-    public void WriteInfo(string message)
+    /// <summary>
+    /// Writes a yellow hash symbol to indicate a file was skipped.
+    /// Used when a file already exists at the destination path.
+    /// </summary>
+    public void WriteSkip()
     {
-        Console.WriteLine(message);
+        WriteColored("#", ConsoleColor.Yellow);
     }
 }
