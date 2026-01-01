@@ -6,7 +6,8 @@
             "type": "coreclr",
             "request": "launch",
             "program": "${workspaceFolder}/bin/Debug/net9.0/Bones.dll",
-            "args": ["personal", "test1"],
+            "args": ["-nogit"],
+            "cwd": "/Users/jakewatkins/source/trashcode/test",
             "stopAtEntry": false,
             "console": "integratedTerminal",
             "preLaunchTask": "build"
