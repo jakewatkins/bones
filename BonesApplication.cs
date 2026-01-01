@@ -47,7 +47,19 @@ public sealed class BonesApplication
         try
         {
             // Parse command-line arguments
+            var showUsage = ShouldShowUsage(args);
             var includeSpecKit = ShouldIncludeSpecKit(args);
+            var initGit = ShouldInitGit(args);
+
+            if (showUsage)
+            {
+                _console.WriteLineColored("Usage: bones [options]", ConsoleColor.Green);
+                _console.WriteLineColored("Options:", ConsoleColor.Green);
+                _console.WriteLineColored("  -h, --help       Show this help message and exit", ConsoleColor.Green);
+                _console.WriteLineColored("  -sk, -SK        Include Spec-Kit setup", ConsoleColor.Green);
+                _console.WriteLineColored("  -nogit, -NOGIT  Do not initialize a Git repository", ConsoleColor.Green);
+                return;
+            }
 
             // Ensure directory structure exists
             _fileOperationsService.EnsureDirectoryStructure();
@@ -62,7 +74,10 @@ public sealed class BonesApplication
             await _fileOperationsService.CopyPromptsAsync(promptList, _fileDownloadService, cancellationToken);
 
             // Initialize Git repository if needed
-            _gitService.InitializeRepository();
+            if (initGit)
+            {
+                _gitService.InitializeRepository();
+            }
 
             // Set up Spec-Kit if requested
             if (includeSpecKit)
@@ -80,6 +95,11 @@ public sealed class BonesApplication
         }
     }
 
+    private static bool ShouldShowUsage(string[] args)
+    {
+        return args.Any(arg => string.Equals(arg, "-h", StringComparison.OrdinalIgnoreCase) ||
+                              string.Equals(arg, "--help", StringComparison.OrdinalIgnoreCase));
+    }
     /// <summary>
     /// Determines if the SK flag was provided in the command-line arguments.
     /// The flag is case-insensitive and can be -sk or -SK.
@@ -90,6 +110,12 @@ public sealed class BonesApplication
     {
         return args.Any(arg => string.Equals(arg, "-sk", StringComparison.OrdinalIgnoreCase) ||
                               string.Equals(arg, "-SK", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool ShouldInitGit(string[] args)
+    {
+        return !args.Any(arg => string.Equals(arg, "-nogit", StringComparison.OrdinalIgnoreCase) ||
+                              string.Equals(arg, "-NOGIT", StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>
